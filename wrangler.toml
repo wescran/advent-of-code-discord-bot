@@ -1,0 +1,9 @@
+name = "advent-of-code-discord-bot"
+main = "./src/server.js"
+compatibility_date = "2023-12-02"
+
+[vars]
+ADVENT_YEAR = "2023"
+
+[triggers]
+crons = ["0 5 1-25 12 *"] 

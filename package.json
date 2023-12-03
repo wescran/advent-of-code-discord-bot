@@ -1,0 +1,20 @@
+{
+  "name": "advent-of-code-discord-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "discord-interactions": "^3.4.0",
+    "itty-router": "^4.0.23"
+  },
+  "devDependencies": {
+    "jest": "^29.3.1",
+    "node-fetch": "^3.2.2",
+    "wrangler": "^3.18.0"
+  },
+  "private": true,
+  "scripts": {
+    "start": "wrangler dev",
+    "deploy": "wrangler publish",
+    "test": "jest"
+  }
+}
