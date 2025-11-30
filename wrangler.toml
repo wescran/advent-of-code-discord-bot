@@ -6,4 +6,4 @@ compatibility_date = "2025-12-01"
 ADVENT_YEAR = "2025"
 
 [triggers]
-crons = ["0 5 1-12 12 *"] 
+crons = ["0 5 1-12 12 *"]

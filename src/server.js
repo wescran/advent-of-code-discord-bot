@@ -9,7 +9,7 @@ import {
   verifyKey,
 } from 'discord-interactions';
 import { LEADERBOARD_COMMAND, STATS_COMMAND, USERS_COMMAND, INVITE_COMMAND } from './commands.js';
-import { getLeaderboard, getStats, getUsers} from './aoc.js';
+import { getLeaderboard, getStats, getUsers } from './aoc.js';
 import { sendMessage } from './message.js';
 
 class JsonResponse extends Response {
@@ -52,6 +52,9 @@ router.post('/', async (request, env) => {
 
   if (message.type === InteractionType.APPLICATION_COMMAND) {
     // Most user commands will come as `APPLICATION_COMMAND`.
+    // IS_COMPONENTS_V2 flag = 1 << 15 = 32768
+    const IS_COMPONENTS_V2 = 32768;
+
     switch (message.data.name.toLowerCase()) {
       case LEADERBOARD_COMMAND.name.toLowerCase(): {
         console.log('handling leaderboard request');
@@ -59,7 +62,8 @@ router.post('/', async (request, env) => {
         return new JsonResponse({
           type: 4,
           data: {
-            content: leaderboard,
+            flags: IS_COMPONENTS_V2,
+            components: leaderboard,
           },
         });
       }
@@ -69,7 +73,8 @@ router.post('/', async (request, env) => {
         return new JsonResponse({
           type: 4,
           data: {
-            content: stats,
+            flags: IS_COMPONENTS_V2,
+            components: stats,
           },
         });
       }
@@ -79,18 +84,20 @@ router.post('/', async (request, env) => {
         return new JsonResponse({
           type: 4,
           data: {
-            content: users,
+            flags: IS_COMPONENTS_V2,
+            components: users,
           },
         });
       }
       case INVITE_COMMAND.name.toLowerCase(): {
         const applicationId = env.DISCORD_APPLICATION_ID;
         const INVITE_URL = `https://discord.com/oauth2/authorize?client_id=${applicationId}&scope=applications.commands`;
+        // Keep invite as simple content with ephemeral flag
         return new JsonResponse({
           type: 4,
           data: {
             content: INVITE_URL,
-            flags: 64,
+            flags: 64, // Ephemeral
           },
         });
       }
