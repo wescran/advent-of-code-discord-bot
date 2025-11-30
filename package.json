@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "discord-interactions": "^4.4.0",
-    "itty-router": "^5.0.22"
+    "discord-interactions": "^4.4.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",

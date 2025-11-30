@@ -2,7 +2,6 @@
  * The core server that runs on a Cloudflare worker.
  */
 
-import { Router } from 'itty-router';
 import {
   InteractionResponseType,
   InteractionType,
@@ -24,26 +23,22 @@ class JsonResponse extends Response {
   }
 }
 
-const router = Router();
-
 /**
- * A simple :wave: hello page to verify the worker is working.
+ * Handle GET requests - simple health check
  */
-router.get('/', (request, env) => {
+function handleGet(env) {
   return new Response(`👋 ${env.DISCORD_APPLICATION_ID}`);
-});
+}
 
 /**
- * Main route for all requests sent from Discord.  All incoming messages will
- * include a JSON payload described here:
+ * Handle POST requests from Discord
  * https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object
  */
-router.post('/', async (request, env) => {
+async function handlePost(request, env) {
   const message = await request.json();
   console.log(message);
+  
   if (message.type === InteractionType.PING) {
-    // The `PING` message is used during the initial webhook handshake, and is
-    // required to configure the webhook in the developer portal.
     console.log('Handling Ping request');
     return new JsonResponse({
       type: InteractionResponseType.PONG,
@@ -51,7 +46,6 @@ router.post('/', async (request, env) => {
   }
 
   if (message.type === InteractionType.APPLICATION_COMMAND) {
-    // Most user commands will come as `APPLICATION_COMMAND`.
     // IS_COMPONENTS_V2 flag = 1 << 15 = 32768
     const IS_COMPONENTS_V2 = 32768;
 
@@ -92,7 +86,6 @@ router.post('/', async (request, env) => {
       case INVITE_COMMAND.name.toLowerCase(): {
         const applicationId = env.DISCORD_APPLICATION_ID;
         const INVITE_URL = `https://discord.com/oauth2/authorize?client_id=${applicationId}&scope=applications.commands`;
-        // Keep invite as simple content with ephemeral flag
         return new JsonResponse({
           type: 4,
           data: {
@@ -109,20 +102,25 @@ router.post('/', async (request, env) => {
 
   console.error('Unknown Type');
   return new JsonResponse({ error: 'Unknown Type' }, { status: 400 });
-});
-router.all('*', () => new Response('Not Found.', { status: 404 }));
+}
 
 export default {
-  /**
-   * Every request to a worker will start in the `fetch` method.
-   * Verify the signature with the request, and dispatch to the router.
-   * @param {*} request A Fetch Request object
-   * @param {*} env A map of key/value pairs with env vars and secrets from the cloudflare env.
-   * @returns
-   */
   async fetch(request, env) {
+    const url = new URL(request.url);
+    
+    // Only handle requests to root path
+    if (url.pathname !== '/') {
+      return new Response('Not Found.', { status: 404 });
+    }
+
+    // Handle GET - health check
+    if (request.method === 'GET') {
+      return handleGet(env);
+    }
+
+    // Handle POST - Discord interactions
     if (request.method === 'POST') {
-      // Using the incoming headers, verify this request actually came from discord.
+      // Verify request came from Discord
       const signature = request.headers.get('x-signature-ed25519');
       const timestamp = request.headers.get('x-signature-timestamp');
       console.log(signature, timestamp, env.DISCORD_PUBLIC_KEY);
@@ -137,11 +135,12 @@ export default {
         console.error('Invalid Request');
         return new Response('Bad request signature.', { status: 401 });
       }
+      return handlePost(request, env);
     }
 
-    // Dispatch the request to the appropriate route
-    return router.handle(request, env);
+    return new Response('Method Not Allowed.', { status: 405 });
   },
+  
   async scheduled(controller, env, ctx) {
     console.log("Initiating cron trigger task");
     ctx.waitUntil(sendMessage(controller, env));
