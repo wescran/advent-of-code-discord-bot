@@ -1,6 +1,6 @@
 name = "advent-of-code-discord-bot"
 main = "./src/server.js"
-compatibility_date = "2025-12-01"
+compatibility_date = "2025-11-29"
 
 [vars]
 ADVENT_YEAR = "2025"
